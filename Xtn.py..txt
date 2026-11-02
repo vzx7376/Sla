@@ -1,0 +1,114 @@
+import os
+import sys
+import asyncio
+from colorama import Fore, Style, init
+
+# Inicializa o colorama para as cores funcionarem no Termux
+init(autoreset=True)
+
+# Configuração do Bot do Discord
+import discord
+from discord.ext import commands
+
+intents = discord.Intents.default()
+intents.guilds = True
+intents.members = True  # Lembre-se de ativar as Privileged Intents no Discord Developer Portal
+
+# Configuração correta do prefixo do bot
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+def limpar_tela():
+    os.system('clear')
+
+def exibir_painel():
+    limpar_tela()
+    # Nome bem grande em vermelho
+    print(Fore.RED + Style.BRIGHT + """
+  _____   _______ _   _ ______ _      ____   ____ _______  _____ 
+ |  __ \ / /_   _| \ | |  ____| |    |  _ \ / __ \__   __|/ ____|
+ | |__) / /  | | |  \| | |__  | |    | |_) | |  | | | |  | (___  
+ |  ___/ /   | | | . ` |  __| | |    |  _ <| |  | | | |   \___ \ 
+ | |  / /   _| |_| |\  | |____| |____| |_) | |__| | | |   ____) |
+ |_| /_/   |_____|_| \_|______|______|____/ \____/  |_|  |_____/ 
+                                                                 
+""")
+    
+async def iniciar_painel():
+    exibir_painel()
+    
+    input(Fore.RED + "Você quer mandar a mensagem teste em todos os canal do serve de enter para começar...")
+    
+    server_id_input = input(Fore.WHITE + "coloque o id do serve: ")
+    
+    print(Fore.YELLOW + "\nIniciando verificação...")
+    await asyncio.sleep(1) # Simula o tempo de verificação
+    
+    try:
+        guild_id = int(server_id_input)
+        guild = bot.get_guild(guild_id)
+    except ValueError:
+        print(Fore.RED + "ID do servidor inválido. O ID deve ser apenas números.")
+        await bot.close()
+        return
+
+    if guild is None:
+        print(Fore.RED + "Bot não encontrado no servidor especificado ou ID incorreto.")
+        await bot.close()
+        return
+
+    # Procura por um bot/membro ou cargo com o nome "fantasma"
+    bot_fantasma_encontrado = False
+    
+    # Verifica nos membros do servidor
+    for member in guild.members:
+        if "fantasma" in member.name.lower():
+            bot_fantasma_encontrado = True
+            break
+            
+    # Caso não encontre em membros, verifica nos cargos (roles) do servidor
+    if not bot_fantasma_encontrado:
+        for role in guild.roles:
+            if "fantasma" in role.name.lower():
+                bot_fantasma_encontrado = True
+                break
+
+    if bot_fantasma_encontrado:
+        print(Fore.GREEN + "Verificação bem sucedida! O 'fantasma' foi localizado.")
+        input(Fore.WHITE + "Dê enter para começar o envio contínuo (Ctrl+C para parar)...")
+        
+        print(Fore.YELLOW + "Enviando mensagens sem parar... Pressione Ctrl+C no Termux para interromper.")
+        
+        try:
+            while True:  # Loop infinito para enviar mensagens sem parar
+                for channel in guild.text_channels:
+                    try:
+                        await channel.send("# RAID BY VXRY TEAM XTN ")
+                        print(Fore.GREEN + f"[+] Mensagem enviada no canal: {channel.name}")
+                    except discord.Forbidden:
+                        print(Fore.RED + f"[-] Sem permissão no canal: {channel.name}")
+                    except Exception as e:
+                        print(Fore.RED + f"[-] Erro no canal {channel.name}: {e}")
+                
+                # Aguarda 1 segundo antes de reiniciar o envio nos canais
+                await asyncio.sleep(1)
+                
+        except KeyboardInterrupt:
+            print(Fore.YELLOW + "\n\nEnvio interrompido pelo usuário.")
+    else:
+        print(Fore.RED + "Verificação falhou: O 'fantasma' não está no servidor.")
+    
+    await bot.close()
+
+@bot.event
+async def on_ready():
+    # Quando o bot logar com sucesso, ele inicia o fluxo do painel
+    await iniciar_painel()
+
+# TOKEN CONFIGURADO
+TOKEN = ""
+
+try:
+    bot.run(TOKEN)
+except discord.LoginFailure:
+    print(Fore.RED + "Erro: Token do bot inválido. Verifique o arquivo do script.")
+    
